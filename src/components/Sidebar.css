@@ -1,0 +1,143 @@
+.sidebar {
+  width: 310px;
+  height: 100vh;
+  background: rgba(255, 255, 255, 0.85);
+  border-right: 1px solid #eeeaf6;
+  display: flex;
+  flex-direction: column;
+  padding: 25px 18px;
+}
+
+/* Header */
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.sidebar-header h2 {
+  color: #30264d;
+  font-size: 25px;
+}
+
+.sidebar-header h2 span {
+  color: #9675e8;
+}
+
+.profile-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #a58af0, #8060d6);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+/* Search */
+
+.search-container input {
+  width: 100%;
+  padding: 13px 15px;
+  border: 1px solid #eeeaf6;
+  border-radius: 12px;
+  outline: none;
+  background: #f8f7fc;
+  font-size: 13px;
+}
+
+.search-container input:focus {
+  border-color: #a58af0;
+}
+
+/* Conversations */
+
+.conversation-section {
+  margin-top: 35px;
+}
+
+.conversation-section h4 {
+  font-size: 11px;
+  color: #a09aaf;
+  letter-spacing: 1.5px;
+  margin-bottom: 18px;
+  padding-left: 8px;
+}
+
+.conversation {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 10px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: 0.25s;
+  margin-bottom: 8px;
+}
+
+.conversation:hover {
+  background: #f7f4ff;
+}
+
+.conversation.active {
+  background: #f0eaff;
+}
+
+.conversation-avatar {
+  min-width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-weight: bold;
+}
+
+.purple {
+  background: linear-gradient(135deg, #a58af0, #8060d6);
+}
+
+.blue {
+  background: linear-gradient(135deg, #79b9e9, #6b83d7);
+}
+
+.conversation-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.conversation-info h3 {
+  font-size: 14px;
+  color: #30264d;
+}
+
+.conversation-info p {
+  font-size: 12px;
+  color: #9690a3;
+  margin-top: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.conversation-time {
+  font-size: 10px;
+  color: #a09aaf;
+  white-space: nowrap;
+}
+
+/* Footer */
+
+.sidebar-footer {
+  margin-top: auto;
+  text-align: center;
+  color: #aaa3b8;
+  font-size: 12px;
+  padding: 15px;
+  border-top: 1px solid #f0edf5;
+}

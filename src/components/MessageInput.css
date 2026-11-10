@@ -1,0 +1,79 @@
+.message-input-container {
+  padding: 15px 25px 25px;
+  background: #faf8ff;
+  border-top: 1px solid #eeeaf5;
+}
+
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1.5px solid #eeeaf6;
+  border-radius: 30px;
+  padding: 6px 12px 6px 16px;
+  box-shadow: 0 4px 15px rgba(132, 100, 215, 0.05);
+  transition: all 0.25s ease;
+}
+
+.input-wrapper:focus-within {
+  border-color: #a58af0;
+  box-shadow: 0 4px 20px rgba(132, 100, 215, 0.12);
+}
+
+.attachment-btn {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  color: #a09aaf;
+  cursor: pointer;
+  padding: 6px;
+  margin-right: 8px;
+  transition: color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.attachment-btn:hover {
+  color: #8060d6;
+}
+
+.input-wrapper input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  color: #30264d;
+  background: transparent;
+}
+
+.input-wrapper input::placeholder {
+  color: #a09aaf;
+}
+
+.send-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: #e5defb;
+  color: #a09aaf;
+  font-size: 16px;
+  cursor: not-allowed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+  margin-left: 8px;
+}
+
+.send-btn.active {
+  background: linear-gradient(135deg, #a58af0, #8060d6);
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(132, 100, 215, 0.3);
+}
+
+.send-btn.active:hover {
+  transform: scale(1.05);
+}
