@@ -3,6 +3,7 @@ import Sidebar from "./components/Sidebar";
 import ChatHeader from "./components/ChatHeader";
 import MessageArea from "./components/MessageArea";
 import MessageInput from "./components/MessageInput";
+import LoginPage from "./components/LoginPage";
 import heroImg from "./assets/chatImg.png";
 import './App.css';
 import { ZIM } from 'zego-zim-web';
@@ -11,32 +12,39 @@ const App = () => {
   const [zimInstance, setZimInstance] = useState(null);
   const [selectedUser, setSelectedUser] = useState("KiD");
   const [activeChat, setActiveChat] = useState(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [showUserSelection, setShowUserSelection] = useState(false);
+  
+  // Navigation & Auth Flow States
+  const [showAuthScreen, setShowAuthScreen] = useState(false); // Triggers LoginPage after "Get Started"
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem('user');
+    return saved ? JSON.parse(saved) : null;
+  });
+  
+  const [isZegoConnected, setIsZegoConnected] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
 
   const [messageText, setMessageText] = useState("");
   const [messages, setMessages] = useState([]);
 
-  // Load environment variables
+  // Environment variables
   const appID = Number(import.meta.env.VITE_ZEGO_APP_ID);
   const tokenA = import.meta.env.VITE_ZEGO_TOKEN_A;
   const tokenB = import.meta.env.VITE_ZEGO_TOKEN_B;
 
   // 1. Initialize ZIM SDK Instance
   useEffect(() => {
+    if (!appID) return;
+    
     ZIM.create({ appID });
     const instance = ZIM.getInstance();
     setZimInstance(instance);
 
-    // Event Listener: Real-time Message Reception
     instance.on('messageReceived', function (zim, { messageList }) {
       const incomingMessages = messageList.map(msg => ({
         sender: msg.senderUserID,
         text: msg.message,
         timestamp: msg.timestamp
       }));
-
       setMessages(prev => [...prev, ...incomingMessages]);
     });
 
@@ -44,68 +52,50 @@ const App = () => {
       console.error('ZIM Error:', errorInfo.code, errorInfo.message);
     });
 
-    instance.on('tokenWillExpire', function (zim, { second }) {
-      const activeToken = selectedUser === "KiD" ? tokenA : tokenB;
-      zim.renewToken(activeToken)
-        .then(() => console.log("Token renewed successfully"))
-        .catch((err) => console.error("Token renewal failed:", err));
-    });
-
     return () => {
-      instance.destroy();
+      if (instance) instance.destroy();
     };
-  }, []);
+  }, [appID]);
 
-  // 2. Login Handler
-  const handleLogin = () => {
-    if (!zimInstance) {
-      console.error("ZIM Instance not initialized yet");
-      return;
-    }
+  // 2. Connect Zego Session for Selected User
+  const handleZegoConnect = () => {
+    if (!zimInstance) return;
 
     setLoginLoading(true);
-
     const userID = selectedUser;
     const loginToken = selectedUser === "KiD" ? tokenA : tokenB;
 
-    const config = {
-      userName: selectedUser,
-      token: loginToken
-    };
-
-    console.log("Attempting ZIM Login with:", userID);
-
-    zimInstance.login(userID, config)
+    zimInstance.login(userID, { userName: selectedUser, token: loginToken })
       .then(() => {
-        setIsLoggedIn(true);
+        setIsZegoConnected(true);
         setActiveChat(null);
         setLoginLoading(false);
-        console.log(`Successfully logged in as ${selectedUser}`);
       })
       .catch((err) => {
         console.error("ZEGOCLOUD Login error:", err);
         setLoginLoading(false);
-        alert(`Login failed (${err.code}): ${err.message}`);
+        alert(`Connection failed (${err.code}): ${err.message}`);
       });
   };
 
-  // 3. Send Real-time Message Handler
+  // 3. Logout Handler
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    setUser(null);
+    setShowAuthScreen(false);
+    setIsZegoConnected(false);
+    setActiveChat(null);
+  };
+
+  // 4. Send Message Handler
   const handleSendMessage = () => {
     if (!messageText.trim() || !activeChat || !zimInstance) return;
 
-    const toConversationID = activeChat;
-    const conversationType = 0; // Peer-to-peer chat
-    const config = { priority: 1 };
-
-    const messageTextObj = {
-      type: 1,
-      message: messageText.trim()
-    };
-
+    const messageTextObj = { type: 1, message: messageText.trim() };
     const currentText = messageText.trim();
     setMessageText("");
 
-    zimInstance.sendMessage(messageTextObj, toConversationID, conversationType, config)
+    zimInstance.sendMessage(messageTextObj, activeChat, 0, { priority: 1 })
       .then(({ message }) => {
         const sentMsg = {
           sender: selectedUser,
@@ -120,10 +110,12 @@ const App = () => {
       });
   };
 
-  return (
-    <div className="app-container">
-      {!showUserSelection ? (
-        /* LANDING PAGE */
+  // RENDER FLOW:
+
+  // STEP 1: Landing Page (Default screen if not clicking Get Started and not logged in)
+  if (!showAuthScreen && !user) {
+    return (
+      <div className="app-container">
         <div className="landing-page">
           <nav className="navbar">
             <div className="logo">
@@ -148,7 +140,7 @@ const App = () => {
               </p>
               <button
                 className="get-started"
-                onClick={() => setShowUserSelection(true)}
+                onClick={() => setShowAuthScreen(true)}
               >
                 Get Started <span>→</span>
               </button>
@@ -158,15 +150,32 @@ const App = () => {
             </div>
           </main>
         </div>
-      ) : !isLoggedIn ? (
-        /* USER SELECTION PAGE */
+      </div>
+    );
+  }
+
+  // STEP 2: MongoDB Login / Sign Up Page (Triggers after clicking "Get Started")
+  if (!user) {
+    return (
+      <LoginPage
+        onLoginSuccess={(userData) => {
+          setUser(userData);
+        }}
+      />
+    );
+  }
+
+  // STEP 3: User Selection / Welcome Screen (Shown after successful login before entering chat room)
+  if (!isZegoConnected) {
+    return (
+      <div className="app-container">
         <div className="landing-page">
           <div className="selection-page">
             <div className="selection-card">
               <div className="selection-icon">🗪</div>
-              <h1>Welcome to WeChat</h1>
+              <h1>Welcome to WeChat, {user.username || user.email}!</h1>
               <p className="selection-subtitle">
-                Who's joining the conversation today?
+                Select your chat identity to join the conversation:
               </p>
 
               <div className="user-options">
@@ -193,52 +202,52 @@ const App = () => {
 
               <button 
                 className="continue-btn" 
-                onClick={handleLogin}
+                onClick={handleZegoConnect}
                 disabled={loginLoading}
               >
-                {loginLoading ? "Connecting..." : "Continue →"}
+                {loginLoading ? "Connecting..." : "Continue to Chat →"}
               </button>
 
-              <button
-                className="back-btn"
-                onClick={() => setShowUserSelection(false)}
-              >
-                ← Back to home
+              <button className="back-btn" onClick={handleLogout}>
+                Log Out
               </button>
             </div>
           </div>
         </div>
-      ) : (
-        /* MAIN DASHBOARD UI */
-        <div className="chat-dashboard">
-          <Sidebar
-            currentUser={selectedUser}
-            selectedChatUser={activeChat}
-            onSelectUser={(userId) => setActiveChat(userId)}
-          />
+      </div>
+    );
+  }
 
-          <div className="main-chat-window">
-            {activeChat ? (
-              <>
-                <ChatHeader user={activeChat} />
-                <MessageArea messages={messages} currentUser={selectedUser} />
-                <MessageInput
-                  messageText={messageText}
-                  setMessageText={setMessageText}
-                  onSendMessage={handleSendMessage}
-                />
-              </>
-            ) : (
-              /* EMPTY PLACEHOLDER SCREEN */
-              <div className="empty-chat-state">
-                
-                <h2>Select a chat to start messaging</h2>
-                <p>Choose a contact from the sidebar on the left to begin your real-time conversation.</p>
-              </div>
-            )}
-          </div>
+  // STEP 4: Main Chat Dashboard
+  return (
+    <div className="app-container">
+      <div className="chat-dashboard">
+        <Sidebar
+          currentUser={selectedUser}
+          selectedChatUser={activeChat}
+          onSelectUser={(userId) => setActiveChat(userId)}
+          onLogout={handleLogout}
+        />
+
+        <div className="main-chat-window">
+          {activeChat ? (
+            <>
+              <ChatHeader user={activeChat} />
+              <MessageArea messages={messages} currentUser={selectedUser} />
+              <MessageInput
+                messageText={messageText}
+                setMessageText={setMessageText}
+                onSendMessage={handleSendMessage}
+              />
+            </>
+          ) : (
+            <div className="empty-chat-state">
+              <h2>Welcome, {selectedUser}!</h2>
+              <p>Choose a contact from the sidebar on the left to begin your real-time conversation.</p>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };
