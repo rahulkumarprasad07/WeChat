@@ -14,7 +14,7 @@ const App = () => {
   const [activeChat, setActiveChat] = useState(null);
   
   // Navigation & Auth Flow States
-  const [showAuthScreen, setShowAuthScreen] = useState(false); // Triggers LoginPage after "Get Started"
+  const [showAuthScreen, setShowAuthScreen] = useState(false);
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('user');
     return saved ? JSON.parse(saved) : null;
@@ -110,9 +110,7 @@ const App = () => {
       });
   };
 
-  // RENDER FLOW:
-
-  // STEP 1: Landing Page (Default screen if not clicking Get Started and not logged in)
+  // STEP 1: Landing Page
   if (!showAuthScreen && !user) {
     return (
       <div className="app-container">
@@ -154,7 +152,7 @@ const App = () => {
     );
   }
 
-  // STEP 2: MongoDB Login / Sign Up Page (Triggers after clicking "Get Started")
+  // STEP 2: Sign-In / Sign-Up Page
   if (!user) {
     return (
       <LoginPage
@@ -165,7 +163,7 @@ const App = () => {
     );
   }
 
-  // STEP 3: User Selection / Welcome Screen (Shown after successful login before entering chat room)
+  // STEP 3: User Selection / Welcome Screen
   if (!isZegoConnected) {
     return (
       <div className="app-container">
@@ -218,21 +216,28 @@ const App = () => {
     );
   }
 
-  // STEP 4: Main Chat Dashboard
+  // STEP 4: Main Chat Dashboard with Mobile Responsiveness
   return (
     <div className="app-container">
       <div className="chat-dashboard">
-        <Sidebar
-          currentUser={selectedUser}
-          selectedChatUser={activeChat}
-          onSelectUser={(userId) => setActiveChat(userId)}
-          onLogout={handleLogout}
-        />
+        <div className={`sidebar-wrapper ${activeChat ? 'mobile-hide' : ''}`}>
+          <Sidebar
+            currentUser={selectedUser}
+            selectedChatUser={activeChat}
+            onSelectUser={(userId) => setActiveChat(userId)}
+            onLogout={handleLogout}
+          />
+        </div>
 
-        <div className="main-chat-window">
+        <div className={`main-chat-window ${!activeChat ? 'mobile-hide' : ''}`}>
           {activeChat ? (
             <>
-              <ChatHeader user={activeChat} />
+              <div className="mobile-chat-header">
+                <button className="back-to-list-btn" onClick={() => setActiveChat(null)}>
+                  ← Back
+                </button>
+                <ChatHeader user={activeChat} />
+              </div>
               <MessageArea messages={messages} currentUser={selectedUser} />
               <MessageInput
                 messageText={messageText}
@@ -243,7 +248,7 @@ const App = () => {
           ) : (
             <div className="empty-chat-state">
               <h2>Welcome, {selectedUser}!</h2>
-              <p>Choose a contact from the sidebar on the left to begin your real-time conversation.</p>
+              <p>Select a contact to start messaging.</p>
             </div>
           )}
         </div>
